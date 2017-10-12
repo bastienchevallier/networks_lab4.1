@@ -13,11 +13,11 @@ import java.net.DatagramPacket;
 
 class Messenger implements Runnable{
 	private final Charset CONVERTER = StandardCharsets.UTF_8;
-	Layer AboveLayer;
-	DatagramSocket socket;
+	private Layer AboveLayer;
+	private DatagramSocket socket;
 
-	public void Messenger(){
-		this.socket = GroundLayer.socket;
+	public Messenger(){
+		this.socket = GroundLayer.getDatagramSocket();
 		this.AboveLayer = GroundLayer.getAboveLayer();
 	}
 
@@ -26,7 +26,7 @@ class Messenger implements Runnable{
 		//TODO datagram size?
 		DatagramPacket datagram = new DatagramPacket(data,1024);
 		//TODO infinite loop?
-		while(true){
+		while(true && !GroundLayer.getStop()){
 			try{
 				socket.receive(datagram);
 				String payload = new String(datagram.getData(),this.CONVERTER);
@@ -41,7 +41,8 @@ class Messenger implements Runnable{
 }
 
 public class GroundLayer {
-	public static DatagramSocket socket;
+	private static Boolean stop;
+	private static DatagramSocket socket;
 	/**
 	 * This {@code Charset} is used to convert between our Java native String
 	 * encoding and a chosen encoding for the effective payloads that fly over the
@@ -60,7 +61,9 @@ public class GroundLayer {
 		try{
 			socket = new DatagramSocket(localPort);
 			Messenger _messenger = new Messenger();
-
+			Thread thread = new Thread(_messenger);
+			thread.start();
+			stop=false;
 
 			return true;
 		}catch(SocketException e){
@@ -83,11 +86,15 @@ public class GroundLayer {
 				InetAddress HostAddress = InetAddress.getByName(destinationHost);
 				DatagramPacket _payload = new DatagramPacket(payload.getBytes(),payload.length(),HostAddress,destinationPort);
 				socket.send(_payload);
+				DatagramSocket socket = new DatagramSocket();
+				socket.send(_payload);
+				socket.close();
+
 			}
 		}catch(SocketException e) {
 			System.err.println("Exception throws by the socket : " + e.getMessage());
 		}catch(IOException e) {
-			System.err.println("Wrong destinationHost : "+e.getMessage());
+			System.err.println("Wrong destinationHost : " + e.getMessage());
 		} 
 	}
 
@@ -100,6 +107,13 @@ public class GroundLayer {
 		return AboveLayer;
 	}
 
+	public static DatagramSocket getDatagramSocket(){
+		return socket;
+	}
+	
+	public static Boolean getStop(){
+		return stop;
+	}
 	public static void setAboveLayer(Layer aboveLayer) {
 		AboveLayer = aboveLayer;
 	}

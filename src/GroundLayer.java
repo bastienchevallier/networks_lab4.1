@@ -68,6 +68,9 @@ public class GroundLayer {
 			Thread thread = new Thread(_messenger);
 			thread.start();
 
+
+
+
 			return true;
 		}catch(SocketException e){
 			System.out.println(e.getMessage());
@@ -88,17 +91,26 @@ public class GroundLayer {
 			if(Math.random()<RELIABILITY) {
 				InetAddress HostAddress = InetAddress.getByName(destinationHost);
 				DatagramPacket _payload = new DatagramPacket(payload.getBytes(),payload.length(),HostAddress,destinationPort);
+
 				socket.send(_payload);
+				DatagramSocket socket = new DatagramSocket();
+
+				socket.send(_payload);
+
+				socket.close();
+
+
 			}
 		}catch(SocketException e) {
 			System.err.println("Exception throws by the socket : " + e.getMessage());
 		}catch(IOException e) {
-			System.err.println("Wrong destinationHost : "+e.getMessage());
+			System.err.println("Wrong destinationHost : " + e.getMessage());
 		} 
 	}
 
 	public static void close() {
 		stop=true;
+
 		socket.close();
 		System.err.println("GroundLayer closed");
 	}

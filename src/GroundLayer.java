@@ -86,10 +86,6 @@ public class GroundLayer {
 				InetAddress HostAddress = InetAddress.getByName(destinationHost);
 				DatagramPacket _payload = new DatagramPacket(payload.getBytes(),payload.length(),HostAddress,destinationPort);
 				socket.send(_payload);
-				DatagramSocket socket = new DatagramSocket();
-				socket.send(_payload);
-				socket.close();
-
 			}
 		}catch(SocketException e) {
 			System.err.println("Exception throws by the socket : " + e.getMessage());
@@ -99,6 +95,7 @@ public class GroundLayer {
 	}
 
 	public static void close() {
+		stop=true;
 		socket.close();
 		System.err.println("GroundLayer closed");
 	}

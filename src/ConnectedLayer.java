@@ -25,12 +25,14 @@ public class ConnectedLayer implements Layer {
 	}
 
 	public void send(String payload) {
-		if(pckt_number!=0) {
-			pckt_number ++;
-			String wrapped_payload = Integer.toString(ConnectionId)+ ";" + Integer.toString(pckt_number) + ";" + payload;
+		String wrapped_payload;
+		if(pckt_number==0) {
+			wrapped_payload = Integer.toString(ConnectionId)+ ";" + Integer.toString(pckt_number) + ";" + payload;
+		}else {
+			pckt_number++;
+			wrapped_payload = Integer.toString(ConnectionId)+ ";" + Integer.toString(pckt_number) + ";" + payload;
 		}
-		GroundLayer.send(payload, destinationHost, destinationPort);
-		pckt_number ++;
+		GroundLayer.send(wrapped_payload, destinationHost, destinationPort);
 	}
 
 
@@ -38,19 +40,22 @@ public class ConnectedLayer implements Layer {
 		String[] parsed_payload = payload.split(";",3);
 		int pckt_numb = Integer.parseInt(parsed_payload[1]);
 		String rcvd_payload = parsed_payload[2];
-		if (pckt_numb==pckt_number && !rcvd_payload.equals("--ACK--")) {
+		if (pckt_numb==pckt_number+1 && !rcvd_payload.equals("--ACK--")) {
 			String ack = parsed_payload[0]+parsed_payload[1]+"--ACK--";
 			GroundLayer.send(ack, destinationHost, destinationPort);
 		}else {
-			
+			//Do something
 		}
 	}
 
 
 	public void deliverTo(Layer above) {
+		//TODO To verify
+		GroundLayer.deliverTo(above);
 	}
 
 	public void close() {
-
+		//TODO To verify
+		GroundLayer.close();
 	}
 }

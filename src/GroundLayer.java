@@ -16,7 +16,7 @@ class Messenger implements Runnable{
 	private Layer AboveLayer;
 	private DatagramSocket socket;
 
-	public void Messenger(){
+	public Messenger(){
 		this.socket = GroundLayer.getDatagramSocket();
 		this.AboveLayer = GroundLayer.getAboveLayer();
 	}
@@ -26,12 +26,15 @@ class Messenger implements Runnable{
 		//TODO datagram size?
 		DatagramPacket datagram = new DatagramPacket(data,1024);
 		//TODO infinite loop?
-		while(true && !GroundLayer.getStop()){
+		while(!GroundLayer.getStop()){
 			try{
 				socket.receive(datagram);
 				String payload = new String(datagram.getData(),this.CONVERTER);
 				String source = new String(datagram.getAddress().getAddress(),this.CONVERTER);
+				while(AboveLayer==null){
+				}
 				AboveLayer.receive(payload,source);
+				
 			}catch(IOException e){
 				System.err.println(e.getMessage());
 			}
@@ -59,11 +62,12 @@ public class GroundLayer {
 
 	public static boolean start(int localPort) {
 		try{
+			stop=false;
 			socket = new DatagramSocket(localPort);
 			Messenger _messenger = new Messenger();
 			Thread thread = new Thread(_messenger);
 			thread.start();
-			stop=false;
+
 			return true;
 		}catch(SocketException e){
 			System.out.println(e.getMessage());
@@ -84,9 +88,7 @@ public class GroundLayer {
 			if(Math.random()<RELIABILITY) {
 				InetAddress HostAddress = InetAddress.getByName(destinationHost);
 				DatagramPacket _payload = new DatagramPacket(payload.getBytes(),payload.length(),HostAddress,destinationPort);
-				DatagramSocket socket = new DatagramSocket();
 				socket.send(_payload);
-				socket.close();
 			}
 		}catch(SocketException e) {
 			System.err.println("Exception throws by the socket : " + e.getMessage());
@@ -96,7 +98,8 @@ public class GroundLayer {
 	}
 
 	public static void close() {
-
+		stop=true;
+		socket.close();
 		System.err.println("GroundLayer closed");
 	}
 

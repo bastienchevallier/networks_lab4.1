@@ -13,20 +13,20 @@ import java.net.DatagramPacket;
 
 class Messenger implements Runnable{
 	private final Charset CONVERTER = StandardCharsets.UTF_8;
-	Layer AboveLayer;
-	DatagramSocket socket;
-	
+	private Layer AboveLayer;
+	private DatagramSocket socket;
+
 	public void Messenger(){
-		this.socket = GroundLayer.socket;
+		this.socket = GroundLayer.getDatagramSocket();
 		this.AboveLayer = GroundLayer.getAboveLayer();
 	}
-	
+
 	public void run(){
 		byte[] data=new byte[1024];
 		//TODO datagram size?
 		DatagramPacket datagram = new DatagramPacket(data,1024);
 		//TODO infinite loop?
-		while(true){
+		while(true && !GroundLayer.getStop()){
 			try{
 				socket.receive(datagram);
 				String payload = new String(datagram.getData(),this.CONVERTER);
@@ -36,12 +36,13 @@ class Messenger implements Runnable{
 				System.err.println(e.getMessage());
 			}
 		}
-		
+
 	}
 }
 
 public class GroundLayer {
-	public static DatagramSocket socket;
+	private static Boolean stop;
+	private static DatagramSocket socket;
 	/**
 	 * This {@code Charset} is used to convert between our Java native String
 	 * encoding and a chosen encoding for the effective payloads that fly over the
@@ -60,6 +61,9 @@ public class GroundLayer {
 		try{
 			socket = new DatagramSocket(localPort);
 			Messenger _messenger = new Messenger();
+			Thread thread = new Thread(_messenger);
+			thread.start();
+			stop=false;
 			return true;
 		}catch(SocketException e){
 			System.out.println(e.getMessage());
@@ -69,39 +73,46 @@ public class GroundLayer {
 
 	}
 
-  public static void deliverTo(Layer layer) {
+	public static void deliverTo(Layer layer) {
 		setAboveLayer(layer);
-  }
+	}
 
 
-  public static void send(String payload, String destinationHost,
-      int destinationPort) {
-	  try {
-		  if(Math.random()<RELIABILITY) {
-			  InetAddress HostAddress = InetAddress.getByName(destinationHost);
-			  DatagramPacket _payload = new DatagramPacket(payload.getBytes(),payload.length(),HostAddress,destinationPort);
-			  DatagramSocket socket = new DatagramSocket();
-			  socket.send(_payload);
-			  socket.close();
-		  }
-	  }catch(SocketException e) {
-		  System.err.println("Exception throws by the socket : " + e.getMessage());
-	  }catch(IOException e) {
-		  System.err.println("Wrong destinationHost : "+e.getMessage());
-	  } 
-  }
+	public static void send(String payload, String destinationHost,
+			int destinationPort) {
+		try {
+			if(Math.random()<RELIABILITY) {
+				InetAddress HostAddress = InetAddress.getByName(destinationHost);
+				DatagramPacket _payload = new DatagramPacket(payload.getBytes(),payload.length(),HostAddress,destinationPort);
+				DatagramSocket socket = new DatagramSocket();
+				socket.send(_payload);
+				socket.close();
+			}
+		}catch(SocketException e) {
+			System.err.println("Exception throws by the socket : " + e.getMessage());
+		}catch(IOException e) {
+			System.err.println("Wrong destinationHost : "+e.getMessage());
+		} 
+	}
 
 	public static void close() {
-		
+
 		System.err.println("GroundLayer closed");
 	}
 
-public static Layer getAboveLayer() {
-	return AboveLayer;
-}
+	public static Layer getAboveLayer() {
+		return AboveLayer;
+	}
 
-public static void setAboveLayer(Layer aboveLayer) {
-	AboveLayer = aboveLayer;
-}
+	public static DatagramSocket getDatagramSocket(){
+		return socket;
+	}
+	
+	public static Boolean getStop(){
+		return stop;
+	}
+	public static void setAboveLayer(Layer aboveLayer) {
+		AboveLayer = aboveLayer;
+	}
 
 }

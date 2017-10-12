@@ -26,12 +26,15 @@ class Messenger implements Runnable{
 		//TODO datagram size?
 		DatagramPacket datagram = new DatagramPacket(data,1024);
 		//TODO infinite loop?
-		while(true && !GroundLayer.getStop()){
+		while(!GroundLayer.getStop()){
 			try{
 				socket.receive(datagram);
 				String payload = new String(datagram.getData(),this.CONVERTER);
 				String source = new String(datagram.getAddress().getAddress(),this.CONVERTER);
+				while(AboveLayer==null){
+				}
 				AboveLayer.receive(payload,source);
+				
 			}catch(IOException e){
 				System.err.println(e.getMessage());
 			}
@@ -59,11 +62,14 @@ public class GroundLayer {
 
 	public static boolean start(int localPort) {
 		try{
+			stop=false;
 			socket = new DatagramSocket(localPort);
 			Messenger _messenger = new Messenger();
 			Thread thread = new Thread(_messenger);
 			thread.start();
-			stop=false;
+
+
+
 
 			return true;
 		}catch(SocketException e){

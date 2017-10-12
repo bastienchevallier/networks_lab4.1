@@ -93,11 +93,6 @@ public class GroundLayer {
 				DatagramPacket _payload = new DatagramPacket(payload.getBytes(),payload.length(),HostAddress,destinationPort);
 
 				socket.send(_payload);
-				DatagramSocket socket = new DatagramSocket();
-
-				socket.send(_payload);
-
-				socket.close();
 
 
 			}

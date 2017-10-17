@@ -58,6 +58,7 @@ public class GroundLayer {
 
 	public static boolean start(int localPort) {
 		try{
+			stop=false;
 			socket = new DatagramSocket(localPort);
 			Messenger _messenger = new Messenger();
 			Thread thread = new Thread(_messenger);

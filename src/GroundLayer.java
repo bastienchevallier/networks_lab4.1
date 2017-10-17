@@ -13,27 +13,23 @@ import java.net.DatagramPacket;
 
 class Messenger implements Runnable{
 	private final Charset CONVERTER = StandardCharsets.UTF_8;
-	private Layer AboveLayer;
-	private DatagramSocket socket;
 
 	public Messenger(){
-		this.socket = GroundLayer.getDatagramSocket();
-		this.AboveLayer = GroundLayer.getAboveLayer();
 	}
 
 	public void run(){
 		byte[] data=new byte[1024];
 		//TODO datagram size?
-		DatagramPacket datagram = new DatagramPacket(data,1024);
+		DatagramPacket datagram = new DatagramPacket(data,data.length);
 		//TODO infinite loop?
 		while(!GroundLayer.getStop()){
 			try{
-				socket.receive(datagram);
+				GroundLayer.getDatagramSocket().receive(datagram);
 				String payload = new String(datagram.getData(),this.CONVERTER);
-				String source = new String(datagram.getAddress().getAddress(),this.CONVERTER);
-				while(AboveLayer==null){
+				String source = new String(datagram.getAddress().getHostAddress());
+				while(GroundLayer.getAboveLayer()==null){
 				}
-				AboveLayer.receive(payload,source);
+				GroundLayer.getAboveLayer().receive(payload,source);
 				
 			}catch(IOException e){
 				System.err.println(e.getMessage());
@@ -44,7 +40,7 @@ class Messenger implements Runnable{
 }
 
 public class GroundLayer {
-	private static Boolean stop;
+	private static Boolean stop=false;
 	private static DatagramSocket socket;
 	/**
 	 * This {@code Charset} is used to convert between our Java native String
@@ -62,18 +58,17 @@ public class GroundLayer {
 
 	public static boolean start(int localPort) {
 		try{
-			stop=false;
 			socket = new DatagramSocket(localPort);
 			Messenger _messenger = new Messenger();
 			Thread thread = new Thread(_messenger);
 			thread.start();
 
-
-
-
 			return true;
 		}catch(SocketException e){
-			System.out.println(e.getMessage());
+			System.err.println(e.getMessage());
+			return false;
+		}catch(IOException e){
+			System.err.println(e.getMessage());
 			return false;
 		}
 
@@ -90,7 +85,8 @@ public class GroundLayer {
 		try {
 			if(Math.random()<RELIABILITY) {
 				InetAddress HostAddress = InetAddress.getByName(destinationHost);
-				DatagramPacket _payload = new DatagramPacket(payload.getBytes(),payload.length(),HostAddress,destinationPort);
+				byte[] buffer = payload.getBytes(CONVERTER);
+				DatagramPacket _payload = new DatagramPacket(buffer,buffer.length,HostAddress,destinationPort);
 				socket.send(_payload);
 
 			}
